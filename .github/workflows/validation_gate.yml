@@ -1,0 +1,19 @@
+name: Validation Gate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  upload-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: write pr number
+        run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
+
+      - name: upload artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          path: pr_number.txt
