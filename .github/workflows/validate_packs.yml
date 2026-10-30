@@ -1,0 +1,59 @@
+name: Validate quickstarts
+
+on:
+  workflow_run:
+    workflows: ["Validation Gate"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  statuses: write
+  pull-requests: write
+
+env:
+  COMMIT_SHA: ${{ github.event.workflow_run.head_commit.id }}
+
+jobs:
+  ensure-quickstart-ids-are-unique:
+    name: Ensure quickstart ids are unique
+    runs-on: ubuntu-latest
+    env:
+      SECRET_TOKEN: ${{ secrets.SECRET_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Create temp directory
+        run: mkdir -p ${{ runner.temp }}/artifacts/
+
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@268677152d06ba59fcec7a7f0b5d961b6ccd7e1e
+        with:
+          workflow: validation_gate.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          path: ${{ runner.temp }}/artifacts/
+
+      - name: Get and validate PR number
+        id: get_pr_number
+        run: |
+          PR_NUMBER=$(cat ${{ runner.temp }}/artifacts/artifact/pr_number.txt)
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "Error: Invalid PR number"
+            exit 1
+          fi
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_ENV
+          echo "upstream head repo: ${{ github.event.workflow_run.head_repository.full_name }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          ref: "refs/pull/${{ env.pr-number }}/merge"
+
+      - name: Setup workspace
+        uses: "./.github/actions/bootstrap"
+
+      - name: Check for unique names and ids
+        id: validation
+        run: cd utils && npm run check-quickstart-uniqueness
+
+      - name: Consumer done
+        run: echo "consumer finished"
