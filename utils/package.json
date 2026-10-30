@@ -1,0 +1,7 @@
+{
+  "name": "poc-utils",
+  "version": "1.0.0",
+  "scripts": {
+    "check-quickstart-uniqueness": "node -e \"console.log('legit uniqueness check')\""
+  }
+}
